@@ -78,6 +78,10 @@ export function ResumePreview({ resume }: { resume: ResumeDocument }) {
 
   return (
     <article className="min-h-[960px] rounded-[2rem] bg-white p-8 shadow-[0_24px_70px_rgba(15,23,42,0.12)] sm:p-10">
+      <div className="mb-5 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+        <span>ATS-safe preview</span>
+        <span>{resume.title || "Untitled Resume"}</span>
+      </div>
       <header className="space-y-3 border-b border-slate-200 pb-6">
         <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
           {resume.personalInfo.fullName || "Your Name"}
