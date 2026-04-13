@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+const emptyExportStats = {
+  docx: 0,
+  pdf: 0,
+  lastExportedAt: null,
+  lastFormat: null,
+} as const;
+
 export const personalInfoSchema = z.object({
   email: z.string().trim().max(120),
   fullName: z.string().trim().max(120),
@@ -27,11 +34,19 @@ export const educationItemSchema = z.object({
   startDate: z.string().trim().max(30),
 });
 
+export const exportStatsSchema = z.object({
+  docx: z.number().int().min(0),
+  pdf: z.number().int().min(0),
+  lastExportedAt: z.string().nullable(),
+  lastFormat: z.enum(["pdf", "docx"]).nullable(),
+});
+
 export const resumeDocumentSchema = z.object({
   atsScore: z.number().min(0).max(100).nullable(),
   completionScore: z.number().min(0).max(100),
   createdAt: z.string().nullable(),
   education: z.array(educationItemSchema).max(6),
+  exports: exportStatsSchema.default(emptyExportStats),
   experience: z.array(experienceItemSchema).max(8),
   id: z.string(),
   lastSavedAt: z.string().nullable(),
@@ -45,6 +60,7 @@ export const resumeDocumentSchema = z.object({
 
 export type ExperienceItem = z.infer<typeof experienceItemSchema>;
 export type EducationItem = z.infer<typeof educationItemSchema>;
+export type ResumeExportStats = z.infer<typeof exportStatsSchema>;
 export type ResumeDocument = z.infer<typeof resumeDocumentSchema>;
 
 export type ResumeOwner = {
@@ -92,6 +108,7 @@ export function createDefaultResume(owner: ResumeOwner): ResumeDocument {
     atsScore: null,
     completionScore: 0,
     createdAt: null,
+    exports: emptyExportStats,
     updatedAt: null,
     lastSavedAt: null,
     personalInfo: {
@@ -159,6 +176,12 @@ export function calculateResumeCompletion(resume: ResumeDocument) {
 export function sanitizeResume(resume: ResumeDocument) {
   const parsed = resumeDocumentSchema.parse({
     ...resume,
+    exports: {
+      docx: resume.exports?.docx ?? 0,
+      pdf: resume.exports?.pdf ?? 0,
+      lastExportedAt: resume.exports?.lastExportedAt ?? null,
+      lastFormat: resume.exports?.lastFormat ?? null,
+    },
     title: resume.title.trim() || "Untitled Resume",
     summary: resume.summary.trim(),
     skills: resume.skills.map((skill) => skill.trim()).filter(Boolean),
@@ -203,6 +226,7 @@ export function createResumeWritePayload(resume: ResumeDocument) {
     experience: sanitized.experience,
     education: sanitized.education,
     skills: sanitized.skills,
+    exports: sanitized.exports,
     atsScore: sanitized.atsScore,
     completionScore: sanitized.completionScore,
   };

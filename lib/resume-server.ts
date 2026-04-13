@@ -8,6 +8,7 @@ import {
   createDefaultResume,
   createResumeWritePayload,
   resumeDocumentSchema,
+  type ResumeExportStats,
   type ResumeDocument,
 } from "@/lib/resume";
 
@@ -23,6 +24,21 @@ function toIsoString(value: unknown) {
   return null;
 }
 
+function normalizeExportStats(value: unknown): ResumeExportStats {
+  const raw =
+    value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+
+  return {
+    docx: typeof raw.docx === "number" ? raw.docx : 0,
+    pdf: typeof raw.pdf === "number" ? raw.pdf : 0,
+    lastExportedAt: toIsoString(raw.lastExportedAt),
+    lastFormat:
+      raw.lastFormat === "pdf" || raw.lastFormat === "docx"
+        ? raw.lastFormat
+        : null,
+  };
+}
+
 function normalizeResume(data: Record<string, unknown>) {
   return resumeDocumentSchema.parse({
     id: typeof data.id === "string" ? data.id : "",
@@ -32,6 +48,7 @@ function normalizeResume(data: Record<string, unknown>) {
     summary: typeof data.summary === "string" ? data.summary : "",
     experience: data.experience,
     education: data.education,
+    exports: normalizeExportStats(data.exports),
     skills: data.skills,
     atsScore: typeof data.atsScore === "number" ? data.atsScore : null,
     completionScore:

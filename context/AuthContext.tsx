@@ -28,6 +28,10 @@ import {
   getFirebaseDb,
   googleProvider,
 } from "@/lib/firebase";
+import {
+  identifyAnalyticsUser,
+  resetAnalyticsUser,
+} from "@/lib/analytics";
 
 type AuthContextValue = {
   isBootstrapping: boolean;
@@ -133,6 +137,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      identifyAnalyticsUser({
+        id: user.uid,
+        email: user.email,
+        name: user.displayName,
+      });
+      return;
+    }
+
+    resetAnalyticsUser();
+  }, [user]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

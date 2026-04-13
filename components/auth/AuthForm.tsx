@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { FirebaseError } from "firebase/app";
 import { useAuth } from "@/context/AuthContext";
+import { captureAnalyticsEvent } from "@/lib/analytics";
 import {
   authFormSchema,
   type AuthFormValues,
@@ -71,6 +72,11 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     startTransition(async () => {
       try {
+        captureAnalyticsEvent(isSignup ? "signup_started" : "login_started", {
+          method: "email",
+          redirect_to: redirectTo,
+        });
+
         if (isSignup) {
           await signUpWithEmail(
             values.name!.trim(),
@@ -81,9 +87,16 @@ export function AuthForm({ mode }: AuthFormProps) {
           await signInWithEmail(values.email.trim(), values.password);
         }
 
+        captureAnalyticsEvent(isSignup ? "signup_completed" : "login_completed", {
+          method: "email",
+          redirect_to: redirectTo,
+        });
         router.replace(redirectTo);
         router.refresh();
       } catch (error) {
+        captureAnalyticsEvent(isSignup ? "signup_failed" : "login_failed", {
+          method: "email",
+        });
         setFormError(formatFirebaseError(error));
       }
     });
@@ -94,10 +107,21 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     startTransition(async () => {
       try {
+        captureAnalyticsEvent(isSignup ? "signup_started" : "login_started", {
+          method: "google",
+          redirect_to: redirectTo,
+        });
         await signInWithGoogle();
+        captureAnalyticsEvent(isSignup ? "signup_completed" : "login_completed", {
+          method: "google",
+          redirect_to: redirectTo,
+        });
         router.replace(redirectTo);
         router.refresh();
       } catch (error) {
+        captureAnalyticsEvent(isSignup ? "signup_failed" : "login_failed", {
+          method: "google",
+        });
         setFormError(formatFirebaseError(error));
       }
     });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { captureAnalyticsEvent } from "@/lib/analytics";
 import type { AtsAnalysis, JdMatchAnalysis } from "@/lib/ats";
 import type { ResumeDocument } from "@/lib/resume";
 
@@ -50,6 +51,14 @@ export function AnalysisPanel({ onAtsScore, resume }: AnalysisPanelProps) {
         const result = (await response.json()) as AtsAnalysis;
         setAtsResult(result);
         onAtsScore(result.score);
+        captureAnalyticsEvent("ats_score_run", {
+          format_compliance: result.breakdown.formatCompliance,
+          keyword_density: result.breakdown.keywordDensity,
+          quantified_achievements: result.breakdown.quantifiedAchievements,
+          resume_id: resume.id,
+          score: result.score,
+          section_completeness: result.breakdown.sectionCompleteness,
+        });
       } catch (analysisError) {
         console.error(analysisError);
         setError("ATS scoring failed. Check your Firebase auth session and try again.");
@@ -79,6 +88,13 @@ export function AnalysisPanel({ onAtsScore, resume }: AnalysisPanelProps) {
 
         const result = (await response.json()) as JdMatchAnalysis;
         setJdResult(result);
+        captureAnalyticsEvent("jd_match_run", {
+          coverage_score: result.coverageScore,
+          matched_keywords: result.matchedKeywords.length,
+          missing_keywords: result.missingKeywords.length,
+          resume_id: resume.id,
+          top_keywords: result.topKeywords.length,
+        });
       } catch (analysisError) {
         console.error(analysisError);
         setError("JD matching failed. Paste a longer job description and try again.");

@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { AnalyticsEventOnMount } from "@/components/analytics/AnalyticsEventOnMount";
 import { AuthForm } from "@/components/auth/AuthForm";
 
 export default function SignupPage() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 items-center justify-center px-6 py-10 sm:px-10 lg:px-12">
+      <AnalyticsEventOnMount eventName="signup_viewed" />
       <div className="grid w-full items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="hidden space-y-6 lg:block">
           <span className="pill">Firebase ready</span>

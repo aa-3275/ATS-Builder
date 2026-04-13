@@ -1,17 +1,129 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isNullableTimestamp(value) {
+      return value == null || value is timestamp;
+    }
+
+    function isNullableScore(value) {
+      return value == null || (value is number && value >= 0 && value <= 100);
+    }
+
+    function isBasicString(value, maxLength) {
+      return value is string && value.size() <= maxLength;
+    }
+
+    function isPersonalInfo(value) {
+      return value is map
+        && value.keys().hasOnly([
+          'email',
+          'fullName',
+          'linkedIn',
+          'location',
+          'phone',
+          'portfolio',
+        ])
+        && isBasicString(value.email, 120)
+        && isBasicString(value.fullName, 120)
+        && isBasicString(value.linkedIn, 120)
+        && isBasicString(value.location, 120)
+        && isBasicString(value.phone, 40)
+        && isBasicString(value.portfolio, 120);
+    }
+
+    function isExportStats(value) {
+      return value is map
+        && value.keys().hasOnly([
+          'docx',
+          'pdf',
+          'lastExportedAt',
+          'lastFormat',
+        ])
+        && value.docx is number
+        && value.docx >= 0
+        && value.pdf is number
+        && value.pdf >= 0
+        && isNullableTimestamp(value.lastExportedAt)
+        && (
+          value.lastFormat == null
+          || value.lastFormat == 'pdf'
+          || value.lastFormat == 'docx'
+        );
+    }
+
+    function isResumeDocument(data) {
+      return data.keys().hasOnly([
+          'atsScore',
+          'completionScore',
+          'createdAt',
+          'education',
+          'exports',
+          'experience',
+          'id',
+          'lastSavedAt',
+          'personalInfo',
+          'skills',
+          'summary',
+          'title',
+          'updatedAt',
+          'userId',
+        ])
+        && isBasicString(data.id, 120)
+        && isBasicString(data.userId, 128)
+        && isBasicString(data.title, 120)
+        && isBasicString(data.summary, 700)
+        && data.skills is list
+        && data.skills.size() <= 30
+        && data.experience is list
+        && data.experience.size() <= 8
+        && data.education is list
+        && data.education.size() <= 6
+        && isNullableScore(data.atsScore)
+        && data.completionScore is number
+        && data.completionScore >= 0
+        && data.completionScore <= 100
+        && isNullableTimestamp(data.createdAt)
+        && isNullableTimestamp(data.updatedAt)
+        && isNullableTimestamp(data.lastSavedAt)
+        && isPersonalInfo(data.personalInfo)
+        && isExportStats(data.exports);
+    }
+
     match /users/{userId} {
-      allow create, read, update: if request.auth != null && request.auth.uid == userId;
+      allow create, read, update: if isOwner(userId)
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'email',
+          'displayName',
+          'photoURL',
+          'updatedAt',
+          'lastLoginAt',
+          'createdAt',
+        ])
+        && request.resource.data.uid == userId;
       allow delete: if false;
     }
 
     match /resumes/{resumeId} {
-      allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && isResumeDocument(request.resource.data);
 
-      allow read, update, delete: if request.auth != null
-        && resource.data.userId == request.auth.uid;
+      allow read, delete: if isOwner(resource.data.userId);
+
+      allow update: if isOwner(resource.data.userId)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isResumeDocument(request.resource.data);
     }
   }
 }

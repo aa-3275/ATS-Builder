@@ -3,6 +3,7 @@
 ## 1. Create your local env file
 
 Copy `.env.local.example` to `.env.local` and paste in your Firebase values.
+If you want launch analytics, also add your PostHog project key and host.
 
 ## 2. Enable Firebase products
 
@@ -25,10 +26,18 @@ In Firebase Console:
 npm run dev
 ```
 
-## 5. What to test
+## 5. Optional analytics setup
+
+- Create a free PostHog project
+- Copy the project API key into `NEXT_PUBLIC_POSTHOG_KEY`
+- Leave `NEXT_PUBLIC_POSTHOG_HOST` as `https://us.i.posthog.com` unless your project uses a different region
+
+## 6. What to test
 
 - Visit `/signup`
 - Create an account or use Google sign-in
 - Confirm you reach `/dashboard`
 - Visit `/editor`
+- Click the landing page CTA and confirm it appears in PostHog
+- Run ATS score, JD match, and export flows and confirm events appear in PostHog
 - Sign out and confirm protected routes redirect back to `/login`

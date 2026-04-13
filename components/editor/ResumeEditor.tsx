@@ -3,6 +3,7 @@
 import { startTransition, useDeferredValue, useMemo, useState } from "react";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { AnalysisPanel } from "@/components/editor/AnalysisPanel";
+import { ExportPanel } from "@/components/editor/ExportPanel";
 import { ResumeInsights } from "@/components/editor/ResumeInsights";
 import { ResumePreview } from "@/components/editor/ResumePreview";
 import { BasicsSection } from "@/components/editor/sections/BasicsSection";
@@ -133,6 +134,7 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
           }}
           resume={resume}
         />
+        <ExportPanel resume={resume} />
         <ResumeInsights resume={resume} />
         <BasicsSection onChange={updateResume} resume={resume} />
         <SummarySection onChange={updateResume} resume={resume} />
